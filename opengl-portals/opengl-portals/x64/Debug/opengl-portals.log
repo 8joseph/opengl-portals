@@ -1,2 +1,5 @@
 ﻿  main.cpp
+C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\main.cpp(76,28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\main.cpp(81,20): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\main.cpp(82,20): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
   opengl-portals.vcxproj -> C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\x64\Debug\opengl-portals.exe
