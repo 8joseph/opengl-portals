@@ -77,9 +77,6 @@ int main(){
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        const float radius = 10.0f;
-        float camX = sin(glfwGetTime());
-        float camZ = sin(glfwGetTime());
         glm::mat4 view;
         view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
         shader.setMat4("view", view);
