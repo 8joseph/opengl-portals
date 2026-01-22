@@ -46,3 +46,13 @@ void Camera::setLocation(glm::vec3 newLocation)
 {
 	location = newLocation;
 }
+
+glm::vec3 Camera::getUp()
+{
+	return cameraUp;
+}
+
+glm::vec3 Camera::getFront()
+{
+	return cameraFront;
+}

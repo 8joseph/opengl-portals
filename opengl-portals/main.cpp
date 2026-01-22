@@ -4,6 +4,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "testCube.h"
+#include "Camera.h"
 
 
 #include <iostream>
@@ -18,11 +19,8 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
+Camera mainCamera(glm::vec3(1, 0, 0));
 
-//camera variables
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 //variables for delta time
 float deltaTime = 0.0f;
@@ -30,8 +28,7 @@ float lastFrame = 0.0f;
 
 bool firstMouse = true;
 bool captureMouse = true;
-float yaw = -90.0f;
-float pitch = 0.0f;
+
 float lastX = 800.0f / 2.0;
 float lastY = 600.0f / 2.0;
 
@@ -65,7 +62,7 @@ int main(){
     
 
     testCube testCube1(glm::vec3(0, 0, 0));
-
+    
     while (!glfwWindowShouldClose(window))
     {
         processInput(window);
@@ -78,7 +75,7 @@ int main(){
         lastFrame = currentFrame;
 
         glm::mat4 view;
-        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        view = mainCamera.getViewMatrix(); 
         shader.setMat4("view", view);
         shader.use();
 
@@ -104,7 +101,11 @@ void processInput(GLFWwindow* window)
     {
         glfwSetWindowShouldClose(window, true);
     }
+
     const float camSpeed = 1.4f * deltaTime;
+    glm::vec3 cameraPos = mainCamera.getLocation();
+    glm::vec3 cameraFront = mainCamera.getFront();
+    glm::vec3 cameraUp = mainCamera.getUp();
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
     {
         cameraPos += camSpeed * cameraFront;
@@ -121,6 +122,8 @@ void processInput(GLFWwindow* window)
     {
         cameraPos += camSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
     }
+
+    mainCamera.setLocation(cameraPos);
 }
 
 //taken from learnopengl.com
@@ -144,19 +147,7 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     float sensitivity = 0.1f; // change this value to your liking
     xoffset *= sensitivity;
     yoffset *= sensitivity;
-
-    yaw += xoffset;
-    pitch += yoffset;
-
-    // make sure that when pitch is out of bounds, screen doesn't get flipped
-    if (pitch > 89.0f)
-        pitch = 89.0f;
-    if (pitch < -89.0f)
-        pitch = -89.0f;
-
-    glm::vec3 front;
-    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    front.y = sin(glm::radians(pitch));
-    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraFront = glm::normalize(front);
+    
+    mainCamera.updatePitchAndYaw(yoffset, xoffset);
+    
 }

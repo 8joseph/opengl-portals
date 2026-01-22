@@ -8,6 +8,8 @@ public:
 	void updatePitchAndYaw(float aPitch, float aYaw);
 	glm::vec3 getLocation();
 	void setLocation(glm::vec3 newLocation);
+	glm::vec3 getUp();
+	glm::vec3 getFront();
 private:
 	glm::vec3 location;
 	glm::vec3 cameraUp;
