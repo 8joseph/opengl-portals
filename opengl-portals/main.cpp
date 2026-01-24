@@ -33,6 +33,7 @@ float lastX = 800.0f / 2.0;
 float lastY = 600.0f / 2.0;
 
 
+
 int main(){
 	glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
