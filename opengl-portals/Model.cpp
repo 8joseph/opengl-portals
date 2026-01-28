@@ -1,6 +1,5 @@
 //a lot of code in this file is copied from learnopengl.com (modified to not including lighting)
 #include "Model.h"
-#include "stb_image.h"
 
 void Model::draw(Shader& shader)
 {
@@ -82,6 +81,7 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 		std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
 		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 	}
+	return Mesh(vertices, indices, textures);
 }
 
 std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName)
@@ -114,7 +114,7 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType 
 	return textures; 
 }
 
-unsigned int textureFromFile(const char* path, const std::string& directory, bool gamma)
+unsigned int Model::textureFromFile(const char* path, const std::string& directory, bool gamma)
 {
 	std::string filename = std::string(path);
 	filename = directory + '/' + filename;

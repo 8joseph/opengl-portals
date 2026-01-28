@@ -6,7 +6,7 @@
 #include "testCube.h"
 #include "Camera.h"
 
-
+#include "Model.h"
 #include <iostream>
 
 #include "ShaderClass.h"
@@ -60,9 +60,9 @@ int main(){
     }
     Shader shader("shader.vs", "shader.fs");
     glEnable(GL_DEPTH_TEST);
-    
 
-    testCube testCube1(glm::vec3(0, 0, 0));
+    stbi_set_flip_vertically_on_load(true);
+    Model m("models/test.obj");
     
     while (!glfwWindowShouldClose(window))
     {
@@ -76,18 +76,23 @@ int main(){
         lastFrame = currentFrame;
 
         glm::mat4 view;
+        shader.use();
         view = mainCamera.getViewMatrix(); 
         shader.setMat4("view", view);
-        shader.use();
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        shader.setMat4("projection", projection);
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // center it
+        model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));     // scale it
+        shader.setMat4("model", model);
 
-        testCube1.draw(shader);
+        m.draw(shader);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
     glfwTerminate();
     return 0;
-
 }
 
 //if the window is resized, resize the glfw viewport to match
