@@ -83,7 +83,7 @@ int main(){
         shader.setMat4("projection", projection);
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // center it
-        model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));     // scale it
+        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));     // scale it
         shader.setMat4("model", model);
 
         m.draw(shader);
@@ -109,7 +109,7 @@ void processInput(GLFWwindow* window)
     }
 
     const float camSpeed = 1.4f * deltaTime;
-    glm::vec3 cameraPos = mainCamera.getLocation();
+    glm::vec3 cameraPos = mainCamera.getPosition();
     glm::vec3 cameraFront = mainCamera.getFront();
     glm::vec3 cameraUp = mainCamera.getUp();
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -129,7 +129,7 @@ void processInput(GLFWwindow* window)
         cameraPos += camSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
     }
 
-    mainCamera.setLocation(cameraPos);
+    mainCamera.setPosition(cameraPos);
 }
 
 //taken from learnopengl.com

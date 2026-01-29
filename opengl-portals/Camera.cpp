@@ -1,50 +1,45 @@
 #include "Camera.h"
 #include "glm/gtc/matrix_transform.hpp"
 
-Camera::Camera(glm::vec3 aLocation, glm::vec3 aUp, float aYaw, float aPitch)
+Camera::Camera(glm::vec3 startPos, glm::vec3 aUp, float aYaw, float aPitch)
+	: Object3D(startPos, glm::vec3(aPitch, aYaw, 0.0f), glm::vec3(1.0f))
 {
-	location = aLocation;
+	position = startPos;
 	cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 	cameraUp = aUp;
 
-	yaw = aYaw;
-	pitch = aPitch;
+	rotation.y = aYaw;
+	rotation.x = aPitch;
 }
 
 glm::mat4 Camera::getViewMatrix()
 {
-	return glm::lookAt(location, location + cameraFront, cameraUp);
+	return glm::lookAt(position, position + cameraFront, cameraUp);
 }
 
 
 //maybe change this in the future: have a getPitchAndYaw and setPitchAndYaw, it seems kind of unintuiative to update? idk
 void Camera::updatePitchAndYaw(float aPitch, float aYaw)
 {
-	pitch += aPitch;
-	yaw += aYaw;
+	rotation.x += aPitch;
+	rotation.y += aYaw;
 
 	// make sure that when pitch is out of bounds, screen doesn't get flipped
-	if (pitch > 89.0f)
-		pitch = 89.0f;
-	if (pitch < -89.0f)
-		pitch = -89.0f;
+	if (rotation.x > 89.0f)
+		rotation.x = 89.0f;
+	if (rotation.x < -89.0f)
+		rotation.x = -89.0f;
 	
 	glm::vec3 front;
-	front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	front.y = sin(glm::radians(pitch));
-	front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	front.x = cos(glm::radians(rotation.y)) * cos(glm::radians(rotation.x));
+	front.y = sin(glm::radians(rotation.x));
+	front.z = sin(glm::radians(rotation.y)) * cos(glm::radians(rotation.x));
 	cameraFront = glm::normalize(front);
-
 }
 
-glm::vec3 Camera::getLocation()
+void Camera::setPosition(glm::vec3 newPos)
 {
-	return location;
-}
-
-void Camera::setLocation(glm::vec3 newLocation)
-{
-	location = newLocation;
+	position = newPos;
 }
 
 glm::vec3 Camera::getUp()

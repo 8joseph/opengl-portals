@@ -9,11 +9,12 @@
 #include "ShaderClass.h"
 #include "Mesh.h"
 #include "stb_image.h"
+#include "Object3D.h"
 
-class Model
+class Model : public Object3D
 {
 	public:
-		Model(const char* path) { loadModel(path); }
+		Model(const char* path, glm::vec3 startPosition = glm::vec3(0.0f,0.0f,0.0f), glm::vec3 startRotation = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 startScale = glm::vec3(1.0f, 1.0f, 1.0f));
 		void draw(Shader &shader);
 
 	private:

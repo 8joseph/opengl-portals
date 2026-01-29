@@ -1,14 +1,24 @@
 //a lot of code in this file is copied from learnopengl.com (modified to not including lighting)
 #include "Model.h"
+#include "glm/gtc/matrix_transform.hpp"
+
+Model::Model(const char* path, glm::vec3 startPosition, glm::vec3 startRotation, glm::vec3 startScale)
+	: Object3D(startPosition, startRotation, startScale)
+{
+	loadModel(path);
+}
 
 void Model::draw(Shader& shader)
 {
 	for (unsigned int i = 0; i < meshes.size(); i++)
 	{
+		glm::mat4 modelMatrix = getModelMatrix(); 
+		shader.setMat4("model", modelMatrix);
 		meshes[i].draw(shader);
 	}
 }
 
+//start the model loading process
 void Model::loadModel(std::string path)
 {
 	Assimp::Importer import;

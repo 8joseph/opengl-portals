@@ -144,6 +144,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="Object3D.cpp" />
     <ClCompile Include="stb_implementation.cpp" />
     <ClCompile Include="testCube.cpp" />
   </ItemGroup>
@@ -155,6 +156,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="Object3D.h" />
     <ClInclude Include="ShaderClass.h" />
     <ClInclude Include="testCube.h" />
   </ItemGroup>
