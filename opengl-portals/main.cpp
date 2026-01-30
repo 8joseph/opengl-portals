@@ -60,15 +60,16 @@ int main(){
     }
     Shader shader("shader.vs", "shader.fs");
     glEnable(GL_DEPTH_TEST);
+    
 
     stbi_set_flip_vertically_on_load(true);
-    Model m("models/test.obj");
+    Model m("models/test-toilet.obj");
     
     while (!glfwWindowShouldClose(window))
     {
         processInput(window);
 
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         float currentFrame = glfwGetTime();
@@ -86,6 +87,8 @@ int main(){
         model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));     // scale it
         shader.setMat4("model", model);
 
+
+        m.setPosition(m.getPosition() + glm::vec3(sin( glfwGetTime()) *  0.0001f, 0.0f, 0.0f));
         m.draw(shader);
 
         glfwSwapBuffers(window);
