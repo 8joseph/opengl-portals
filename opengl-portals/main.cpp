@@ -59,18 +59,23 @@ int main(){
         return -1;
     }
     Shader shader("shader.vs", "shader.fs");
+    Shader outlineShader("shader.vs", "shader2.fs");
     glEnable(GL_DEPTH_TEST);
-    
+    glEnable(GL_STENCIL_TEST);
 
     stbi_set_flip_vertically_on_load(true);
     Model m("models/test-toilet.obj");
-    
+    Model m2("models/test-toilet.obj");
+    m2.setScale(glm::vec3(1.2f, 1.2f, 1.2f));
+    m.setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    m2.setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+
     while (!glfwWindowShouldClose(window))
     {
         processInput(window);
 
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -88,8 +93,44 @@ int main(){
         shader.setMat4("model", model);
 
 
-        m.setPosition(m.getPosition() + glm::vec3(sin( glfwGetTime()) *  0.0001f, 0.0f, 0.0f));
-        m.draw(shader);
+        //m.setPosition(m.getPosition() + glm::vec3(sin( glfwGetTime()) *  0.0001f, 0.0f, 0.0f));
+        
+        glEnable(GL_DEPTH_TEST);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);      //always pass the stencil test.
+        glStencilMask(0xFF);                    //write to the stencil buffer (otherwise the 1 would not be written)
+        m.draw(shader);                         //draw the model
+        m2.setScale(glm::vec3(1.2f, 1.2f, 1.2f));
+        outlineShader.use();                    //use the outline shader (block colour)
+        glDisable(GL_DEPTH_TEST);               //dont do a depth test
+
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);    //pass the stencil test if the buffer is not equal to 1
+        glStencilMask(0xFF);                    //write to the stencil buffer
+
+        outlineShader.setMat4("view", view);
+        outlineShader.setMat4("projection", projection);
+        outlineShader.setMat4("model", m2.getModelMatrix());
+        outlineShader.setVec4("col", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+
+
+        m2.draw(outlineShader);
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+        glStencilMask(0x00);
+
+        m2.setScale(glm::vec3(1.4f, 1.4f, 1.4f));
+        outlineShader.setMat4("model", m2.getModelMatrix());
+        outlineShader.setVec4("col", glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+
+        
+        m2.draw(outlineShader);
+
+
+        glStencilMask(0xFF);
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        glEnable(GL_DEPTH_TEST);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
