@@ -9,9 +9,9 @@
 #include "ShaderClass.h"
 #include "Mesh.h"
 #include "stb_image.h"
-#include "Object3D.h"
+#include "Drawable.h"
 
-class Model : public Object3D
+class Model : public Drawable
 {
 	public:
 		Model(const char* path, glm::vec3 startPosition = glm::vec3(0.0f,0.0f,0.0f), glm::vec3 startRotation = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 startScale = glm::vec3(1.0f, 1.0f, 1.0f));

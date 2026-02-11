@@ -1,14 +1,16 @@
 #pragma once
 #include <iostream>
-#include "Model.h"
-#include "Camera.h"
+#include "Drawable.h"
+#include <vector>
+
+
+
 class Scene
 {
 	public:
-		std::vector<Model> getModels();
-		void addModel(Model newModel);
-		void renderScene();
+		void addObject(Drawable* object);
+		void draw(Shader& shader);
 	private:
-		std::vector<Model> sceneModels;
+		std::vector<Drawable*> sceneObjects;
 };
 

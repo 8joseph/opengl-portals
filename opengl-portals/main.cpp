@@ -3,7 +3,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
-#include "testCube.h"
+#include "Scene.h"
 #include "Camera.h"
 
 #include "Model.h"
@@ -14,13 +14,14 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
-void render(Camera camera, Shader shader, Model m);
+void render(Camera camera, Shader shader, Scene s);
 
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 Camera mainCamera(glm::vec3(0.0f, 0.0f, 3.0f));
+Scene scene;
 GLFWwindow* window; 
 
 //variables for delta time
@@ -65,6 +66,8 @@ int main(){
 
     stbi_set_flip_vertically_on_load(true);
     Model m = Model("models/test-toilet.obj");
+    scene.addObject(&m);
+
     
     while (!glfwWindowShouldClose(window))
     {
@@ -80,7 +83,7 @@ int main(){
 
 
         m.setPosition(m.getPosition() + glm::vec3(sin( glfwGetTime()) *  0.0001f, 0.0f, 0.0f));
-        render(mainCamera, shader, m);
+        render(mainCamera, shader, scene);
 
     }
     glfwTerminate();
@@ -150,7 +153,7 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     
 }
 
-void render(Camera camera, Shader shader, Model m)
+void render(Camera camera, Shader shader, Scene s)
 {
     glm::mat4 view;
     shader.use();
@@ -162,7 +165,7 @@ void render(Camera camera, Shader shader, Model m)
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // center it
     model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));     // scale it
     shader.setMat4("model", model);
-    m.draw(shader);
+    s.draw(shader);
     glfwSwapBuffers(window);
     glfwPollEvents();
 }
