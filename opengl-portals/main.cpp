@@ -5,6 +5,7 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "Scene.h"
 #include "Camera.h"
+#include "Portal.h"
 
 #include "Model.h"
 #include <iostream>
@@ -41,7 +42,7 @@ int main(){
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Window", NULL, NULL);
+    window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "OpenGL Portals", NULL, NULL);
     
     if (window == NULL)
     {
@@ -66,7 +67,10 @@ int main(){
 
     stbi_set_flip_vertically_on_load(true);
     Model m = Model("models/test-toilet.obj");
+    Portal p = Portal();
+    p.setPosition(glm::vec3(4, 0, 0));
     scene.addObject(&m);
+    scene.addObject(&p);
 
     
     while (!glfwWindowShouldClose(window))
@@ -74,13 +78,11 @@ int main(){
         processInput(window);
 
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-
-
 
         m.setPosition(m.getPosition() + glm::vec3(sin( glfwGetTime()) *  0.0001f, 0.0f, 0.0f));
         render(mainCamera, shader, scene);
