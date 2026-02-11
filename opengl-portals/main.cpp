@@ -14,13 +14,14 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
+void render(Camera camera, Shader shader, Model m);
 
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-Camera mainCamera(glm::vec3(1, 0, 0));
-
+Camera mainCamera(glm::vec3(0.0f, 0.0f, 3.0f));
+GLFWwindow* window; 
 
 //variables for delta time
 float deltaTime = 0.0f;
@@ -39,8 +40,8 @@ int main(){
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Window", NULL, NULL);
     
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Window", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Window creation failed!" << std::endl;
@@ -63,7 +64,7 @@ int main(){
     
 
     stbi_set_flip_vertically_on_load(true);
-    Model m("models/test-toilet.obj");
+    Model m = Model("models/test-toilet.obj");
     
     while (!glfwWindowShouldClose(window))
     {
@@ -76,23 +77,11 @@ int main(){
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        glm::mat4 view;
-        shader.use();
-        view = mainCamera.getViewMatrix(); 
-        shader.setMat4("view", view);
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        shader.setMat4("projection", projection);
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // center it
-        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));     // scale it
-        shader.setMat4("model", model);
 
 
         m.setPosition(m.getPosition() + glm::vec3(sin( glfwGetTime()) *  0.0001f, 0.0f, 0.0f));
-        m.draw(shader);
+        render(mainCamera, shader, m);
 
-        glfwSwapBuffers(window);
-        glfwPollEvents();
     }
     glfwTerminate();
     return 0;
@@ -159,4 +148,21 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     
     mainCamera.updatePitchAndYaw(yoffset, xoffset);
     
+}
+
+void render(Camera camera, Shader shader, Model m)
+{
+    glm::mat4 view;
+    shader.use();
+    view = camera.getViewMatrix();
+    shader.setMat4("view", view);
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    shader.setMat4("projection", projection);
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // center it
+    model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));     // scale it
+    shader.setMat4("model", model);
+    m.draw(shader);
+    glfwSwapBuffers(window);
+    glfwPollEvents();
 }
