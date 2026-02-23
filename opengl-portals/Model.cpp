@@ -144,9 +144,12 @@ unsigned int Model::textureFromFile(const char* path, const std::string& directo
 		else if (nrComponents == 4)
 			format = GL_RGBA;
 
+
 		glBindTexture(GL_TEXTURE_2D, textureID);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1); //this is to make sure the pixel information is alligned correctly in memory between sbti and openGL, idk why learnopengl does not mention this.
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
+		std::cout<< "ERROR" << glGetError();
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);

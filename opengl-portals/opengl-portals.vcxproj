@@ -151,6 +151,7 @@
     <ClCompile Include="testCube.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="portalShader.fs" />
     <None Include="shader.fs" />
     <None Include="shader.vs" />
   </ItemGroup>

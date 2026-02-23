@@ -10,6 +10,7 @@ public:
 	void setPosition(glm::vec3 newLocation);
 	glm::vec3 getUp();
 	glm::vec3 getFront();
+
 private:
 	glm::vec3 cameraUp;
 	glm::vec3 cameraFront;

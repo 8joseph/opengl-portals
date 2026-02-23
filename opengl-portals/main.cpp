@@ -15,11 +15,11 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
-void render(Camera camera, Shader shader, Scene s);
+void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recursionLevel);
 
 
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1920;
+const unsigned int SCR_HEIGHT = 1080;
 
 Camera mainCamera(glm::vec3(0.0f, 0.0f, 3.0f));
 Scene scene;
@@ -30,10 +30,12 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 bool firstMouse = true;
-bool captureMouse = true;
+bool captureMouse = true; //check - think this is redundant
 
 float lastX = 800.0f / 2.0;
 float lastY = 600.0f / 2.0;
+
+int maxRecursionLevel = 3;
 
 
 
@@ -42,6 +44,7 @@ int main(){
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_STENCIL_BITS, 8);
     window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "OpenGL Portals", NULL, NULL);
     
     if (window == NULL)
@@ -62,15 +65,51 @@ int main(){
         return -1;
     }
     Shader shader("shader.vs", "shader.fs");
-    glEnable(GL_DEPTH_TEST);
-    
+    Shader portalShader("shader.vs", "portalShader.fs");
 
-    stbi_set_flip_vertically_on_load(true);
-    Model m = Model("models/test-toilet.obj");
-    Portal p = Portal();
-    p.setPosition(glm::vec3(4, 0, 0));
-    scene.addObject(&m);
-    scene.addObject(&p);
+    glEnable(GL_DEPTH_TEST);
+
+    glEnable(GL_STENCIL_TEST);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+    glfwWindowHint(GLFW_STENCIL_BITS, 8);
+    glEnable(GL_STENCIL_TEST);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        
+    glEnable(GL_CULL_FACE); //enable face culling
+    glCullFace(GL_FRONT);    //cull back faces
+    glFrontFace(GL_CW);     //font faces are clockwise
+    
+    stbi_set_flip_vertically_on_load(true); //maybe change this 
+
+
+    Model base = Model("models/prototype/prototype.obj");
+    base.setScale(glm::vec3(0.2f));
+    base.setPosition(glm::vec3(0.0f, -0.8f, 0.0f));
+ 
+    scene.addObject(&base);
+
+    Model monkey = Model("models/monkey/monkey.obj");
+    monkey.setScale(glm::vec3(0.3f));
+    monkey.setPosition(glm::vec3(0.0f, -0.3f, 0.0f));
+    scene.addObject(&monkey);
+
+    Portal p1 = Portal();
+    p1.setPosition(glm::vec3(-1.0f, 0.0f, -1.0f));
+    p1.setRotation(glm::vec3(0.0f, 180.0f, 0.0f)); 
+    
+    Portal p2 = Portal();
+    p2.setPosition(glm::vec3(1.0f, 0.0f, -1.0f));
+    p2.setRotation(glm::vec3(0.0f, 180.0f, 0.0f));
+
+
+
+    p1.setLinkedPortal(&p2);
+    p2.setLinkedPortal(&p1);
+    scene.addPortal(&p1);
+
+    scene.addPortal(&p2);
+   
 
     
     while (!glfwWindowShouldClose(window))
@@ -83,9 +122,13 @@ int main(){
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+        monkey.setRotation(glm::vec3(0.0f, monkey.getRotation().y + sin(deltaTime) * 40, 0.0f));
+        monkey.setPosition(glm::vec3( monkey.getPosition().x  + sin(glfwGetTime()) * 0.003, 0.0f, 0.0f));
 
-        m.setPosition(m.getPosition() + glm::vec3(sin( glfwGetTime()) *  0.0001f, 0.0f, 0.0f));
-        render(mainCamera, shader, scene);
+        //m.setPosition(m.getPosition() + glm::vec3(sin( glfwGetTime()) *  0.0001f, 0.0f, 0.0f));
+        render(mainCamera, shader, portalShader, scene, 0);
+        glfwSwapBuffers(window);
+
 
     }
     glfwTerminate();
@@ -155,19 +198,45 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     
 }
 
-void render(Camera camera, Shader shader, Scene s)
-{
+void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recursionLevel)
+{   
+    if (recursionLevel == maxRecursionLevel)
+    {
+        return;
+    }
+    glEnable(GL_STENCIL_TEST);
+    glStencilMask(0xFF);
+
+    glStencilFunc(GL_EQUAL, recursionLevel, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+
+
     glm::mat4 view;
-    shader.use();
     view = camera.getViewMatrix();
-    shader.setMat4("view", view);
+    
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-    shader.setMat4("projection", projection);
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // center it
-    model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));     // scale it
-    shader.setMat4("model", model);
+    
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+    shader.use();
+    //shader.setMat4("model", model);
+    shader.setMat4("view", view);
+    shader.setMat4("projection", projection);
+
+    portalShader.use();
+    //portalShader.setMat4("model", model);
+    portalShader.setMat4("view", view);
+    portalShader.setMat4("projection", projection);
+
     s.draw(shader);
-    glfwSwapBuffers(window);
     glfwPollEvents();
+
+    ///------------------------------------------
+    std::cout << "rendering scene at recursion level: " << recursionLevel << "\n";
+    for (Portal* portal : s.getPortals())
+    {
+        portal->draw(portalShader);
+    }
 }

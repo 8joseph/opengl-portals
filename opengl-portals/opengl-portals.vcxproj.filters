@@ -49,6 +49,7 @@
   <ItemGroup>
     <None Include="shader.vs" />
     <None Include="shader.fs" />
+    <None Include="portalShader.fs" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ShaderClass.h">
