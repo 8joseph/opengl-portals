@@ -35,7 +35,7 @@ bool captureMouse = true; //check - think this is redundant
 float lastX = 800.0f / 2.0;
 float lastY = 600.0f / 2.0;
 
-int maxRecursionLevel = 3;
+int maxRecursionLevel = 1;
 
 
 
@@ -77,7 +77,7 @@ int main(){
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
         
     glEnable(GL_CULL_FACE); //enable face culling
-    glCullFace(GL_FRONT);    //cull back faces
+    glCullFace(GL_FRONT);    //cull front faces (Should be back?? but culling front is what works for some reason)
     glFrontFace(GL_CW);     //font faces are clockwise
     
     stbi_set_flip_vertically_on_load(true); //maybe change this 
@@ -91,7 +91,7 @@ int main(){
 
     Model monkey = Model("models/monkey/monkey.obj");
     monkey.setScale(glm::vec3(0.3f));
-    monkey.setPosition(glm::vec3(0.0f, -0.3f, 0.0f));
+    monkey.setPosition(glm::vec3(-0.8f, -0.3f, 2.0f));
     scene.addObject(&monkey);
 
     Portal p1 = Portal();
@@ -122,8 +122,8 @@ int main(){
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        monkey.setRotation(glm::vec3(0.0f, monkey.getRotation().y + sin(deltaTime) * 40, 0.0f));
-        monkey.setPosition(glm::vec3( monkey.getPosition().x  + sin(glfwGetTime()) * 0.003, 0.0f, 0.0f));
+        monkey.setRotation(glm::vec3(0.0f, monkey.getRotation().y + sin(deltaTime) * 80, 0.0f));
+        monkey.setPosition(glm::vec3( monkey.getPosition().x  + sin(glfwGetTime()) * 0.004, 0.0f, monkey.getPosition().z + cos(glfwGetTime()) * 0.004));
 
         //m.setPosition(m.getPosition() + glm::vec3(sin( glfwGetTime()) *  0.0001f, 0.0f, 0.0f));
         render(mainCamera, shader, portalShader, scene, 0);
@@ -200,15 +200,11 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 
 void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recursionLevel)
 {   
-    if (recursionLevel == maxRecursionLevel)
-    {
-        return;
-    }
-    glEnable(GL_STENCIL_TEST);
-    glStencilMask(0xFF);
+    //glEnable(GL_STENCIL_TEST);
+    //glStencilMask(0xFF);
 
-    glStencilFunc(GL_EQUAL, recursionLevel, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    //glStencilFunc(GL_EQUAL, recursionLevel, 0xFF);
+    //glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
 
 
@@ -233,10 +229,88 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
     s.draw(shader);
     glfwPollEvents();
 
+    if (recursionLevel >= maxRecursionLevel)//CHANGE TO maxRecursionLevel!!
+    {
+        return;
+    }
+
     ///------------------------------------------
     std::cout << "rendering scene at recursion level: " << recursionLevel << "\n";
-    for (Portal* portal : s.getPortals())
+    std::cout << "campos: " << camera.getPosition().x << camera.getPosition().y << camera.getPosition().z << "\nl";
+    std::cout << "camrot: " << camera.getRotation().x << camera.getRotation().y << camera.getRotation().z << "\nl";
+    for (Portal* portal : s.getPortals()) //
     {
+        //write to the stencil buffer with 1
+        glEnable(GL_STENCIL_TEST);
+
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        glStencilFunc(GL_ALWAYS, 1, 0xFF); 
+        glStencilMask(0xFF);
+        
+        //disable colour + depth buffer
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        glDepthMask(GL_FALSE);
+
+        //draw portal so stencil buffer is set
+        portalShader.use();
+        portalShader.setMat4("view", view);
+        portalShader.setMat4("projection", projection);
         portal->draw(portalShader);
+
+        //turn the colour + depth buffers back on
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glDepthMask(GL_TRUE);
+
+        //make it so the stencil buffer will only pass fragments when equal to 1
+        //and stop writing to the stencil buffer
+        glStencilFunc(GL_EQUAL, 1, 0xFF);
+        glStencilMask(0x00);
+
+        //clear the depth buffer DONT USE
+        //glClear(GL_DEPTH_BUFFER_BIT);
+
+        //we cannot clear the depth buffer, so instead set the depth buffer to max distance where the stencil buffer allows
+        //turn off colour mask, make sure that depth will always be written
+        glDepthMask(GL_TRUE);
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        glDepthFunc(GL_ALWAYS);
+        glDepthRange(1.0, 1.0);
+        
+        //draw portal AGAIN
+        portalShader.use();
+        portalShader.setMat4("view", view);
+        portalShader.setMat4("projection", projection);
+        portal->draw(portalShader);
+
+        //reset stuff back
+        glDepthFunc(GL_LESS);
+        glDepthRange(0.0, 1.0);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+
+
+        //draw the portal so if there is nothing facing the portal the wall behind the portal does not get rendered
+        glDisable(GL_DEPTH_TEST);
+        portalShader.use();
+        portalShader.setMat4("view", view);
+        portalShader.setMat4("projection", projection);
+        portal->draw(portalShader);
+        glEnable(GL_DEPTH_TEST);
+
+
+        //get a camera at portal position
+        glm::vec3 bro = portal->getLinkedPortal()->getPosition();
+        Camera reflectedCam = Camera(bro);
+        reflectedCam.updatePitchAndYaw(0.0f, 180.0f);
+
+        
+        // render the reflection
+        render(reflectedCam, shader, portalShader, s, recursionLevel + 1);
+
+        //cleanup
+        glDisable(GL_STENCIL_TEST);
+        glStencilMask(0xFF);
+        glClear(GL_STENCIL_BUFFER_BIT);
     }
 }
+
