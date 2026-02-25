@@ -3,6 +3,7 @@
 #include "Drawable.h"
 #include <vector>
 #include "Portal.h"
+#include "stb_image.h"
 
 
 

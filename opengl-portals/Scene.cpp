@@ -22,4 +22,7 @@ void Scene::draw(Shader& shader)
 	{
 		drawable->draw(shader);
 	}
+
+
 }
+
