@@ -147,6 +147,7 @@
     <ClCompile Include="Object3D.cpp" />
     <ClCompile Include="Portal.cpp" />
     <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="Skybox.cpp" />
     <ClCompile Include="stb_implementation.cpp" />
     <ClCompile Include="testCube.cpp" />
   </ItemGroup>
@@ -166,6 +167,7 @@
     <ClInclude Include="Portal.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="ShaderClass.h" />
+    <ClInclude Include="Skybox.h" />
     <ClInclude Include="testCube.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
