@@ -1,5 +1,7 @@
 #pragma once
 #include "Drawable.h"
+
+
 class Portal : public Drawable
 {
 	public:

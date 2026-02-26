@@ -37,6 +37,24 @@ void Camera::updatePitchAndYaw(float aPitch, float aYaw)
 	cameraFront = glm::normalize(front);
 }
 
+void Camera::setPitchAndYaw(float aPitch, float aYaw)
+{
+	rotation.x = aPitch;
+	rotation.y = aYaw;
+
+	// make sure that when pitch is out of bounds, screen doesn't get flipped
+	if (rotation.x > 89.0f)
+		rotation.x = 89.0f;
+	if (rotation.x < -89.0f)
+		rotation.x = -89.0f;
+
+	glm::vec3 front;
+	front.x = cos(glm::radians(rotation.y)) * cos(glm::radians(rotation.x));
+	front.y = sin(glm::radians(rotation.x));
+	front.z = sin(glm::radians(rotation.y)) * cos(glm::radians(rotation.x));
+	cameraFront = glm::normalize(front);
+}
+
 void Camera::setPosition(glm::vec3 newPos)
 {
 	position = newPos;

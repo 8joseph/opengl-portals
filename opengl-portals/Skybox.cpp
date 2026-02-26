@@ -1,3 +1,5 @@
+//a lot of this code is just a modified version of the code found in the 'Cubemaps' learnopengl chapter
+
 #include "Skybox.h"
 
 static const float SKYBOXVERTICES[] = {
@@ -124,7 +126,7 @@ unsigned int Skybox::loadCubemap(std::vector<std::string> faces)
     return textureID;
 }
 
-
+//delete this?
 unsigned int Skybox::loadTexture(char const* path)
 {
     unsigned int textureID;

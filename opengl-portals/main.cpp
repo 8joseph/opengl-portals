@@ -6,6 +6,8 @@
 #include "Scene.h"
 #include "Camera.h"
 #include "Portal.h"
+#include <glm/gtx/matrix_decompose.hpp>
+
 
 #include "Model.h"
 #include <iostream>
@@ -93,7 +95,8 @@ int main(){
 
     Model monkey = Model("models/monkey/monkey.obj");
     monkey.setScale(glm::vec3(0.3f));
-    monkey.setPosition(glm::vec3(-0.8f, -0.3f, 2.0f));
+    glm::vec3 monkeyStartPos = glm::vec3(-0.0f, 0.1f, 0.0f);
+    monkey.setPosition(monkeyStartPos);
     scene.addObject(&monkey);
 
     Portal p1 = Portal();
@@ -108,9 +111,9 @@ int main(){
 
     p1.setLinkedPortal(&p2);
     p2.setLinkedPortal(&p1);
-    scene.addPortal(&p1);
-
+    
     scene.addPortal(&p2);
+    scene.addPortal(&p1);
 
 
  
@@ -127,7 +130,7 @@ int main(){
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
         monkey.setRotation(glm::vec3(0.0f, monkey.getRotation().y + sin(deltaTime) * 80, 0.0f));
-        monkey.setPosition(glm::vec3( monkey.getPosition().x  + sin(glfwGetTime()) * 0.004, 0.0f, monkey.getPosition().z + cos(glfwGetTime()) * 0.004));
+        monkey.setPosition(glm::vec3( monkeyStartPos.x  + sin(glfwGetTime()) * 1.0f, monkeyStartPos.y, monkeyStartPos.z));
 
         //m.setPosition(m.getPosition() + glm::vec3(sin( glfwGetTime()) *  0.0001f, 0.0f, 0.0f));
         render(mainCamera, shader, portalShader, scene, 0);
@@ -294,21 +297,33 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
 
         //draw the portal so if there is nothing facing the portal the wall behind the portal does not get rendered
         glDisable(GL_DEPTH_TEST);
-        portalShader.use();
+        portalShader.use(); 
         portalShader.setMat4("view", view);
         portalShader.setMat4("projection", projection);
         portal->draw(portalShader);
         glEnable(GL_DEPTH_TEST);
 
 
-        //get a camera at portal position
-        glm::vec3 bro = portal->getLinkedPortal()->getPosition();
-        Camera reflectedCam = Camera(bro);
-        reflectedCam.updatePitchAndYaw(0.0f, 180.0f);
-
+  
+        glm::mat4 portalMatrix = portal->getModelMatrix();
+        glm::mat4 linkedPortalMatrix = portal->getLinkedPortal()->getModelMatrix();
+        glm::mat4 t2 = linkedPortalMatrix * glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::inverse(portalMatrix);
+        glm::vec3 newCamPos = glm::vec3(t2 * glm::vec4(camera.getPosition(), 1.0f));
+        glm::vec3 newCamFront = glm::normalize(glm::vec3(t2 * glm::vec4(camera.getFront(), 0.0f)));
         
+        float pitch = glm::degrees(asin(newCamFront.y));
+        float yaw = glm::degrees(atan2(newCamFront.z, newCamFront.x));
+     
+        //trans = glm::translate(trans, )
+
+
+        Camera newCam(newCamPos);
+        newCam.setPitchAndYaw(pitch, yaw);
+
+
+
         // render the reflection
-        render(reflectedCam, shader, portalShader, s, recursionLevel + 1);
+        render(newCam, shader, portalShader, s, recursionLevel + 1);
 
         //cleanup
         glDisable(GL_STENCIL_TEST);
