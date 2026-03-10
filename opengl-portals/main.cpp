@@ -6,7 +6,6 @@
 #include "Scene.h"
 #include "Camera.h"
 #include "Portal.h"
-#include <glm/gtx/matrix_decompose.hpp>
 
 
 #include "Model.h"
@@ -37,7 +36,7 @@ bool captureMouse = true; //check - think this is redundant
 float lastX = 800.0f / 2.0;
 float lastY = 600.0f / 2.0;
 
-int maxRecursionLevel = 1;
+int maxRecursionLevel = 3;
 
 
 
@@ -80,8 +79,8 @@ int main(){
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
         
     glEnable(GL_CULL_FACE); //enable face culling
-    glCullFace(GL_FRONT);    //cull front faces (Should be back?? but culling front is what works for some reason)
-    glFrontFace(GL_CW);     //font faces are clockwise
+    glCullFace(GL_BACK);    //cull back faces
+    glFrontFace(GL_CCW);     //font faces are clockwise
     
     stbi_set_flip_vertically_on_load(true); //maybe change this 
     
@@ -116,8 +115,6 @@ int main(){
     scene.addPortal(&p1);
 
 
- 
-
     
     while (!glfwWindowShouldClose(window))
     {
@@ -132,7 +129,6 @@ int main(){
         monkey.setRotation(glm::vec3(0.0f, monkey.getRotation().y + sin(deltaTime) * 80, 0.0f));
         monkey.setPosition(glm::vec3( monkeyStartPos.x  + sin(glfwGetTime()) * 1.0f, monkeyStartPos.y, monkeyStartPos.z));
 
-        //m.setPosition(m.getPosition() + glm::vec3(sin( glfwGetTime()) *  0.0001f, 0.0f, 0.0f));
         render(mainCamera, shader, portalShader, scene, 0);
         glfwSwapBuffers(window);
 
@@ -207,14 +203,6 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 
 void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recursionLevel)
 {   
-    //glEnable(GL_STENCIL_TEST);
-    //glStencilMask(0xFF);
-
-    //glStencilFunc(GL_EQUAL, recursionLevel, 0xFF);
-    //glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-
-
-
     glm::mat4 view;
     view = camera.getViewMatrix();
     
@@ -224,12 +212,10 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
     model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
     shader.use();
-    //shader.setMat4("model", model);
     shader.setMat4("view", view);
     shader.setMat4("projection", projection);
 
     portalShader.use();
-    //portalShader.setMat4("model", model);
     portalShader.setMat4("view", view);
     portalShader.setMat4("projection", projection);
 
@@ -304,7 +290,7 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
         glEnable(GL_DEPTH_TEST);
 
 
-  
+        //calculate the transformation of the camera to be used for the portal view
         glm::mat4 portalMatrix = portal->getModelMatrix();
         glm::mat4 linkedPortalMatrix = portal->getLinkedPortal()->getModelMatrix();
         glm::mat4 t2 = linkedPortalMatrix * glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::inverse(portalMatrix);
@@ -314,13 +300,9 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
         float pitch = glm::degrees(asin(newCamFront.y));
         float yaw = glm::degrees(atan2(newCamFront.z, newCamFront.x));
      
-        //trans = glm::translate(trans, )
-
-
+        //create this camera and set the transform variables accordingly
         Camera newCam(newCamPos);
         newCam.setPitchAndYaw(pitch, yaw);
-
-
 
         // render the reflection
         render(newCam, shader, portalShader, s, recursionLevel + 1);

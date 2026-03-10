@@ -45,7 +45,7 @@ Portal* Portal::getLinkedPortal()
 		return linkedPortal;
 	}
 	else {
-		std::cout << "bro123";
+		std::cout << "no linked portal";
 		return this;
 	}
 	
