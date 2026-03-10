@@ -16,7 +16,11 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
-void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recursionLevel);
+void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recursionLevel, glm::mat4 currentProjectionMatrix);
+glm::mat4 ModifyProjectionMatrix(const glm::vec4& clipPlane, glm::mat4 matrix);
+inline float sgn(float a);
+
+
 
 
 const unsigned int SCR_WIDTH = 1920;
@@ -114,6 +118,7 @@ int main(){
     scene.addPortal(&p2);
     scene.addPortal(&p1);
 
+    glm::mat4 startProjection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
     
     while (!glfwWindowShouldClose(window))
@@ -129,7 +134,7 @@ int main(){
         monkey.setRotation(glm::vec3(0.0f, monkey.getRotation().y + sin(deltaTime) * 80, 0.0f));
         monkey.setPosition(glm::vec3( monkeyStartPos.x  + sin(glfwGetTime()) * 1.0f, monkeyStartPos.y, monkeyStartPos.z));
 
-        render(mainCamera, shader, portalShader, scene, 0);
+        render(mainCamera, shader, portalShader, scene, 0, startProjection);
         glfwSwapBuffers(window);
 
 
@@ -201,23 +206,22 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     
 }
 
-void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recursionLevel)
+void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recursionLevel, glm::mat4 currentProjectionMatrix)
 {   
     glm::mat4 view;
     view = camera.getViewMatrix();
     
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
     glm::mat4 model = glm::mat4(1.0f);
     
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
     model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
     shader.use();
     shader.setMat4("view", view);
-    shader.setMat4("projection", projection);
+    shader.setMat4("projection", currentProjectionMatrix);
 
     portalShader.use();
     portalShader.setMat4("view", view);
-    portalShader.setMat4("projection", projection);
+    portalShader.setMat4("projection", currentProjectionMatrix);
 
 
     s.draw(shader, camera);
@@ -243,10 +247,11 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
         glDepthMask(GL_FALSE);
 
+
         //draw portal so stencil buffer is set
         portalShader.use();
         portalShader.setMat4("view", view);
-        portalShader.setMat4("projection", projection);
+        portalShader.setMat4("projection", currentProjectionMatrix);
         portal->draw(portalShader);
 
         //turn the colour + depth buffers back on
@@ -271,7 +276,7 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
         //draw portal AGAIN
         portalShader.use();
         portalShader.setMat4("view", view);
-        portalShader.setMat4("projection", projection);
+        portalShader.setMat4("projection", currentProjectionMatrix);
         portal->draw(portalShader);
 
         //reset stuff back
@@ -280,12 +285,11 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 
-
         //draw the portal so if there is nothing facing the portal the wall behind the portal does not get rendered
         glDisable(GL_DEPTH_TEST);
-        portalShader.use(); 
+        portalShader.use();
         portalShader.setMat4("view", view);
-        portalShader.setMat4("projection", projection);
+        portalShader.setMat4("projection", currentProjectionMatrix);
         portal->draw(portalShader);
         glEnable(GL_DEPTH_TEST);
 
@@ -305,7 +309,9 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
         newCam.setPitchAndYaw(pitch, yaw);
 
         // render the reflection
-        render(newCam, shader, portalShader, s, recursionLevel + 1);
+        glm::mat4 newProjection = ModifyProjectionMatrix(glm::normalize(portal->getModelMatrix()[2]), currentProjectionMatrix);
+
+        render(newCam, shader, portalShader, s, recursionLevel + 1, newProjection);
 
         //cleanup
         glDisable(GL_STENCIL_TEST);
@@ -316,3 +322,41 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
 
 
 
+/*The code below is for oblique frustrum clipping. 
+Taken from: https://terathon.com/blog/oblique-clipping.html 
+(and modified to work in modern OpenGL)
+*/
+
+inline float sgn(float a)
+{
+    if (a > 0.0F) return (1.0F);
+    if (a < 0.0F) return (-1.0F);
+    return (0.0F);
+}
+
+glm::mat4 ModifyProjectionMatrix(const glm::vec4& clipPlane, glm::mat4 matrix)
+{   
+    glm::vec4 q;
+
+    // Calculate the clip-space corner point opposite the clipping plane
+    // as (sgn(clipPlane.x), sgn(clipPlane.y), 1, 1) and
+    // transform it into camera space by multiplying it
+    // by the inverse of the projection matrix
+
+    q.x = (sgn(clipPlane.x) + matrix[2][0]) / matrix[0][0];
+    q.y = (sgn(clipPlane.y) + matrix[2][1]) / matrix[1][1];
+    q.z = -1.0F;
+    q.w = (1.0F + matrix[2][2]) / matrix[3][2];
+
+    // Calculate the scaled plane vector
+    glm::vec4 c = clipPlane * (2.0F / glm::dot(clipPlane, q));
+
+    // Replace the third row of the projection matrix
+    matrix[0][2] = c.x;
+    matrix[1][2] = c.y;
+    matrix[2][2] = c.z + 1.0F;
+    matrix[3][2] = c.w;
+
+
+    return matrix;
+}
