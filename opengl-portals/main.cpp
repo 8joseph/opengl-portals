@@ -118,7 +118,7 @@ int main(){
     scene.addPortal(&p2);
     scene.addPortal(&p1);
 
-    glm::mat4 startProjection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    glm::mat4 startProjection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 30.0f);
 
     
     while (!glfwWindowShouldClose(window))
@@ -308,9 +308,27 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
         Camera newCam(newCamPos);
         newCam.setPitchAndYaw(pitch, yaw);
 
-        // render the reflection
-        glm::mat4 newProjection = ModifyProjectionMatrix(glm::normalize(portal->getModelMatrix()[2]), currentProjectionMatrix);
+        // get cameras view matrix
+        glm::mat4 newView = newCam.getViewMatrix();
 
+        //get the linked portals normal + position (in world space)
+        glm::vec3 linkedNormal = glm::normalize(glm::vec3(linkedPortalMatrix[2]));
+        glm::vec3 linkedPos = glm::vec3(linkedPortalMatrix[3]);
+
+        //transform this into the cameras view space
+        glm::vec3 normalView = glm::normalize(glm::vec3(newView * glm::vec4(linkedNormal, 0.0f)));
+        glm::vec3 posView = glm::vec3(newView * glm::vec4(linkedPos, 1.0f));
+
+        //get distance from origin in view space
+        //move it back a bit too (makes portal less glitchy
+        float d = -glm::dot(normalView, posView);
+        d += 0.01f; 
+
+        //combine this into a plane
+        glm::vec4 viewSpaceClipPlane(normalView.x, normalView.y, normalView.z, d);
+
+        //modify projection matrix for oblique frustrum culling
+        glm::mat4 newProjection = ModifyProjectionMatrix(viewSpaceClipPlane, currentProjectionMatrix);
         render(newCam, shader, portalShader, s, recursionLevel + 1, newProjection);
 
         //cleanup
