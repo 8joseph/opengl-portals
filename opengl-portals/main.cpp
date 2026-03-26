@@ -40,7 +40,7 @@ bool captureMouse = true; //check - think this is redundant
 float lastX = 800.0f / 2.0;
 float lastY = 600.0f / 2.0;
 
-int maxRecursionLevel = 3;
+int maxRecursionLevel = 1;
 
 
 
@@ -106,16 +106,16 @@ int main(){
     p1.setPosition(glm::vec3(-1.0f, 0.0f, -1.0f));
     p1.setRotation(glm::vec3(0.0f, 180.0f, 0.0f)); 
     
-    Portal p2 = Portal();
-    p2.setPosition(glm::vec3(1.0f, 0.0f, -1.0f));
-    p2.setRotation(glm::vec3(0.0f, 180.0f, 0.0f));
+    //Portal p2 = Portal();
+    //p2.setPosition(glm::vec3(1.0f, 0.0f, -1.0f));
+    //p2.setRotation(glm::vec3(0.0f, 180.0f, 0.0f));
 
 
 
-    p1.setLinkedPortal(&p2);
-    p2.setLinkedPortal(&p1);
+    //p1.setLinkedPortal(&p2);
+    //p2.setLinkedPortal(&p1);
     
-    scene.addPortal(&p2);
+    //scene.addPortal(&p2);
     scene.addPortal(&p1);
 
     glm::mat4 startProjection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 30.0f);
@@ -126,7 +126,10 @@ int main(){
         processInput(window);
 
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glStencilMask(0xFF);//CHECK IF THIS IS NEEDED (reset the stencil mask so the stencil bit can be cleared)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+        glDisable(GL_STENCIL_TEST);//CHECK IF THIS IS NEEDED AS WELL (make sure the stencil test is disabled for the first call of render, so the scene is drawn from the main camera.)
 
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -236,21 +239,19 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
     ///------------------------------------------
     for (Portal* portal : s.getPortals()) //
     {
-        //write to the stencil buffer with 1
+        //write to stencil buffer so portal is only drawn where it is
         glEnable(GL_STENCIL_TEST);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);//if the stencil test passes replace the stencil value
+        glStencilFunc(GL_ALWAYS, recursionLevel+1, 0xFF);//always pass the stencil test and write a 1
+        glStencilMask(0xFF);//enable writing to the stenciil buffer
 
-        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-        glStencilFunc(GL_ALWAYS, 1, 0xFF); 
-        glStencilMask(0xFF);
-        
-        //disable colour + depth buffer
+        //the colour and depth masks need to be turned off as we do not want to write to those for this run of drawing the portal
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
         glDepthMask(GL_FALSE);
 
-
-        //draw portal so stencil buffer is set
+        //draw the portal
         portalShader.use();
-        portalShader.setMat4("view", view);
+        portalShader.setMat4("view", camera.getViewMatrix());
         portalShader.setMat4("projection", currentProjectionMatrix);
         portal->draw(portalShader);
 
@@ -258,83 +259,18 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glDepthMask(GL_TRUE);
 
-        //make it so the stencil buffer will only pass fragments when equal to 1
-        //and stop writing to the stencil buffer
-        glStencilFunc(GL_EQUAL, 1, 0xFF);
-        glStencilMask(0x00);
 
-        //clear the depth buffer DONT USE
-        //glClear(GL_DEPTH_BUFFER_BIT);
+        glStencilFunc(GL_EQUAL, recursionLevel+1, 0xFF);//only draw where the portal is
+        glStencilMask(0x00);//dont write to stencil buffer
+        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);//keep the values inside the stencil buffer
 
-        //we cannot clear the depth buffer, so instead set the depth buffer to max distance where the stencil buffer allows
-        //turn off colour mask, make sure that depth will always be written
-        glDepthMask(GL_TRUE);
-        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-        glDepthFunc(GL_ALWAYS);
-        glDepthRange(1.0, 1.0);
+        glm::vec3 newCamPos = portal->getPosition();
+        Camera newCam = Camera(newCamPos);
+
+
+
+        render(newCam, shader, portalShader, s, recursionLevel + 1, currentProjectionMatrix);
         
-        //draw portal AGAIN
-        portalShader.use();
-        portalShader.setMat4("view", view);
-        portalShader.setMat4("projection", currentProjectionMatrix);
-        portal->draw(portalShader);
-
-        //reset stuff back
-        glDepthFunc(GL_LESS);
-        glDepthRange(0.0, 1.0);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
-
-        //draw the portal so if there is nothing facing the portal the wall behind the portal does not get rendered
-        glDisable(GL_DEPTH_TEST);
-        portalShader.use();
-        portalShader.setMat4("view", view);
-        portalShader.setMat4("projection", currentProjectionMatrix);
-        portal->draw(portalShader);
-        glEnable(GL_DEPTH_TEST);
-
-
-        //calculate the transformation of the camera to be used for the portal view
-        glm::mat4 portalMatrix = portal->getModelMatrix();
-        glm::mat4 linkedPortalMatrix = portal->getLinkedPortal()->getModelMatrix();
-        glm::mat4 t2 = linkedPortalMatrix * glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::inverse(portalMatrix);
-        glm::vec3 newCamPos = glm::vec3(t2 * glm::vec4(camera.getPosition(), 1.0f));
-        glm::vec3 newCamFront = glm::normalize(glm::vec3(t2 * glm::vec4(camera.getFront(), 0.0f)));
-        
-        float pitch = glm::degrees(asin(newCamFront.y));
-        float yaw = glm::degrees(atan2(newCamFront.z, newCamFront.x));
-     
-        //create this camera and set the transform variables accordingly
-        Camera newCam(newCamPos);
-        newCam.setPitchAndYaw(pitch, yaw);
-
-        // get cameras view matrix
-        glm::mat4 newView = newCam.getViewMatrix();
-
-        //get the linked portals normal + position (in world space)
-        glm::vec3 linkedNormal = glm::normalize(glm::vec3(linkedPortalMatrix[2]));
-        glm::vec3 linkedPos = glm::vec3(linkedPortalMatrix[3]);
-
-        //transform this into the cameras view space
-        glm::vec3 normalView = glm::normalize(glm::vec3(newView * glm::vec4(linkedNormal, 0.0f)));
-        glm::vec3 posView = glm::vec3(newView * glm::vec4(linkedPos, 1.0f));
-
-        //get distance from origin in view space
-        //move it back a bit too (makes portal less glitchy
-        float d = -glm::dot(normalView, posView);
-        d += 0.01f; 
-
-        //combine this into a plane
-        glm::vec4 viewSpaceClipPlane(normalView.x, normalView.y, normalView.z, d);
-
-        //modify projection matrix for oblique frustrum culling
-        glm::mat4 newProjection = ModifyProjectionMatrix(viewSpaceClipPlane, currentProjectionMatrix);
-        render(newCam, shader, portalShader, s, recursionLevel + 1, newProjection);
-
-        //cleanup
-        glDisable(GL_STENCIL_TEST);
-        glStencilMask(0xFF);
-        glClear(GL_STENCIL_BUFFER_BIT);
     }
 }
 
@@ -349,7 +285,7 @@ inline float sgn(float a)
 {
     if (a > 0.0F) return (1.0F);
     if (a < 0.0F) return (-1.0F);
-    return (0.0F);
+    return (0.0F); //maybe make this 1??
 }
 
 glm::mat4 ModifyProjectionMatrix(const glm::vec4& clipPlane, glm::mat4 matrix)
