@@ -125,6 +125,7 @@ int main(){
     {
         processInput(window);
 
+        glStencilMask(0xFF);
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
@@ -208,13 +209,18 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 
 void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recursionLevel, glm::mat4 currentProjectionMatrix)
 {   
-    glm::mat4 view;
-    view = camera.getViewMatrix();
+    glm::mat4 view = camera.getViewMatrix();
+
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(GL_EQUAL, recursionLevel, 0xFF);
+    glStencilMask(0x00);
     
     glm::mat4 model = glm::mat4(1.0f);
     
+    //maybe delete not sure if model is used anymore
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
     model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+
     shader.use();
     shader.setMat4("view", view);
     shader.setMat4("projection", currentProjectionMatrix);
@@ -236,11 +242,11 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
     ///------------------------------------------
     for (Portal* portal : s.getPortals()) //
     {
-        //write to the stencil buffer with 1
+        //write to the stencil buffer with recursionLevel
         glEnable(GL_STENCIL_TEST);
-
-        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-        glStencilFunc(GL_ALWAYS, 1, 0xFF); 
+        glStencilMask(0xFF);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+        glStencilFunc(GL_EQUAL, recursionLevel, 0xFF); 
         glStencilMask(0xFF);
         
         //disable colour + depth buffer
@@ -260,7 +266,7 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
 
         //make it so the stencil buffer will only pass fragments when equal to 1
         //and stop writing to the stencil buffer
-        glStencilFunc(GL_EQUAL, 1, 0xFF);
+        glStencilFunc(GL_EQUAL, recursionLevel+1, 0xFF);
         glStencilMask(0x00);
 
         //clear the depth buffer DONT USE
@@ -285,13 +291,6 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 
-        //draw the portal so if there is nothing facing the portal the wall behind the portal does not get rendered
-        glDisable(GL_DEPTH_TEST);
-        portalShader.use();
-        portalShader.setMat4("view", view);
-        portalShader.setMat4("projection", currentProjectionMatrix);
-        portal->draw(portalShader);
-        glEnable(GL_DEPTH_TEST);
 
 
         //calculate the transformation of the camera to be used for the portal view
@@ -331,10 +330,28 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
         glm::mat4 newProjection = ModifyProjectionMatrix(viewSpaceClipPlane, currentProjectionMatrix);
         render(newCam, shader, portalShader, s, recursionLevel + 1, newProjection);
 
-        //cleanup
-        glDisable(GL_STENCIL_TEST);
+        //CLEANUP
+        glEnable(GL_STENCIL_TEST);
         glStencilMask(0xFF);
-        glClear(GL_STENCIL_BUFFER_BIT);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
+        glStencilFunc(GL_EQUAL, recursionLevel + 1, 0xFF);
+
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        glDepthMask(GL_FALSE);
+
+        portalShader.use();
+        portalShader.setMat4("view", view);
+        portalShader.setMat4("projection", currentProjectionMatrix);
+        portal->draw(portalShader);
+
+        // Fully reset for the next loop iteration
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glDepthMask(GL_TRUE);
+        glStencilMask(0x00);
+        ////cleanup
+        //glDisable(GL_STENCIL_TEST);
+        //glStencilMask(0xFF);
+        //glClear(GL_STENCIL_BUFFER_BIT);
     }
 }
 
@@ -349,7 +366,7 @@ inline float sgn(float a)
 {
     if (a > 0.0F) return (1.0F);
     if (a < 0.0F) return (-1.0F);
-    return (0.0F);
+    return (1.0F);
 }
 
 glm::mat4 ModifyProjectionMatrix(const glm::vec4& clipPlane, glm::mat4 matrix)
