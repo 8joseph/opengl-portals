@@ -225,6 +225,7 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
     shader.setMat4("view", view);
     shader.setMat4("projection", currentProjectionMatrix);
 
+
     portalShader.use();
     portalShader.setMat4("view", view);
     portalShader.setMat4("projection", currentProjectionMatrix);

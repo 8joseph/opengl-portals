@@ -1,3 +1,16 @@
-﻿  main.cpp
+﻿  Mesh.cpp
+C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\Mesh.cpp(59,43): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+  Model.cpp
+  Portal.cpp
+C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\Portal.cpp(5,7): warning C4305: 'initializing': truncation from 'double' to 'const GLfloat'
+C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\Portal.cpp(6,7): warning C4305: 'initializing': truncation from 'double' to 'const GLfloat'
+C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\Portal.cpp(7,7): warning C4305: 'initializing': truncation from 'double' to 'const GLfloat'
+C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\Portal.cpp(8,7): warning C4305: 'initializing': truncation from 'double' to 'const GLfloat'
+  Scene.cpp
+  Skybox.cpp
+  main.cpp
 C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\main.cpp(132,28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+  testCube.cpp
+  Generating Code...
+  LINK : C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\x64\Debug\opengl-portals.exe not found or not built by the last incremental link; performing full link
   opengl-portals.vcxproj -> C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\x64\Debug\opengl-portals.exe
