@@ -119,7 +119,6 @@ int main(){
     scene.addPortal(&p1);
 
     glm::mat4 startProjection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 30.0f);
-
     
     while (!glfwWindowShouldClose(window))
     {
@@ -312,7 +311,7 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
         glm::mat4 newView = newCam.getViewMatrix();
 
         //get the linked portals normal + position (in world space)
-        glm::vec3 linkedNormal = glm::normalize(glm::vec3(linkedPortalMatrix[2]));
+        glm::vec3 linkedNormal = -glm::normalize(glm::vec3(linkedPortalMatrix[2]));
         glm::vec3 linkedPos = glm::vec3(linkedPortalMatrix[3]);
 
         //transform this into the cameras view space
@@ -323,6 +322,7 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
         //move it back a bit too (makes portal less glitchy
         float d = -glm::dot(normalView, posView);
         d += 0.01f; 
+ 
 
         //combine this into a plane
         glm::vec4 viewSpaceClipPlane(normalView.x, normalView.y, normalView.z, d);
