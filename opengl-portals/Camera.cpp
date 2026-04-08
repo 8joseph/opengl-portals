@@ -55,10 +55,7 @@ void Camera::setPitchAndYaw(float aPitch, float aYaw)
 	cameraFront = glm::normalize(front);
 }
 
-void Camera::setPosition(glm::vec3 newPos)
-{
-	position = newPos;
-}
+
 
 glm::vec3 Camera::getUp()
 {

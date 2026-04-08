@@ -2,10 +2,10 @@
 #include <iostream>
 
 const static GLfloat vertices[] = 
-			{ -0.3, -0.5, 0,
-			  -0.3,  0.5, 0,
-			   0.3,  0.5, 0,
-			   0.3, -0.5, 0 };		
+			{ -0.5, -0.8, 0,
+			  -0.5,  0.8, 0,
+			   0.5,  0.8, 0,
+			   0.5, -0.8, 0 };		
 
 static GLubyte indices[] = 
 			{0,1,2,

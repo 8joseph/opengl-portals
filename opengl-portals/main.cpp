@@ -40,7 +40,7 @@ bool captureMouse = true; //check - think this is redundant
 float lastX = 800.0f / 2.0;
 float lastY = 600.0f / 2.0;
 
-int maxRecursionLevel = 3;
+int maxRecursionLevel = 4;
 
 
 
@@ -90,11 +90,11 @@ int main(){
     
 
 
-    Model base = Model("models/prototype/prototype.obj");
-    base.setScale(glm::vec3(0.2f));
-    base.setPosition(glm::vec3(0.0f, -0.8f, 0.0f));
+    //Model base = Model("models/prototype/prototype.obj");
+    //base.setScale(glm::vec3(0.2f));
+    //base.setPosition(glm::vec3(0.0f, -0.8f, 0.0f));
  
-    scene.addObject(&base);
+    //scene.addObject(&base);
 
     Model monkey = Model("models/monkey/monkey.obj");
     monkey.setScale(glm::vec3(0.3f));
@@ -102,13 +102,18 @@ int main(){
     monkey.setPosition(monkeyStartPos);
     scene.addObject(&monkey);
 
+    Model dust2 = Model("models/dust2/dust2.obj");
+    dust2.setScale(glm::vec3(0.01, 0.01, 0.01));
+    scene.addObject(&dust2);
+
+
     Portal p1 = Portal();
     p1.setPosition(glm::vec3(-1.0f, 0.0f, -1.0f));
     p1.setRotation(glm::vec3(0.0f, 180.0f, 0.0f)); 
     
     Portal p2 = Portal();
-    p2.setPosition(glm::vec3(1.0f, 0.0f, -1.0f));
-    p2.setRotation(glm::vec3(0.0f, 180.0f, 0.0f));
+    p2.setPosition(glm::vec3(-1.0f, 0.0f, 1.0f));
+    p2.setRotation(glm::vec3(0.0f, 0.0f, 0.0f));
 
 
 
@@ -133,7 +138,6 @@ int main(){
         lastFrame = currentFrame;
         monkey.setRotation(glm::vec3(0.0f, monkey.getRotation().y + sin(deltaTime) * 80, 0.0f));
         monkey.setPosition(glm::vec3( monkeyStartPos.x  + sin(glfwGetTime()) * 1.0f, monkeyStartPos.y, monkeyStartPos.z));
-
         render(mainCamera, shader, portalShader, scene, 0, startProjection);
         glfwSwapBuffers(window);
 
@@ -155,11 +159,19 @@ void processInput(GLFWwindow* window)
     {
         glfwSetWindowShouldClose(window, true);
     }
-
-    const float camSpeed = 1.4f * deltaTime;
+    const float camSpeedNormal = 1.4f * deltaTime;
+    const float camSpeedFast = 5.0f * deltaTime;
+    float camSpeed = camSpeedNormal;
     glm::vec3 cameraPos = mainCamera.getPosition();
     glm::vec3 cameraFront = mainCamera.getFront();
     glm::vec3 cameraUp = mainCamera.getUp();
+
+    if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS) {
+        camSpeed = camSpeedFast;
+    }
+    else { camSpeed = camSpeedNormal; }
+
+
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
     {
         cameraPos += camSpeed * cameraFront;

@@ -1,4 +1,4 @@
-	//a lot of code in this file is copied from learnopengl.com (modified to not including lighting)
+//a lot of code in this file is copied from learnopengl.com (modified to not including lighting)
 #include "Model.h"
 #include "glm/gtc/matrix_transform.hpp"
 

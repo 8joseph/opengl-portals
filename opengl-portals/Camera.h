@@ -8,7 +8,6 @@ public:
 	glm::mat4 getViewMatrix();
 	void updatePitchAndYaw(float aPitch, float aYaw);
 	void setPitchAndYaw(float aPitch, float aYaw);
-	void setPosition(glm::vec3 newLocation);
 	glm::vec3 getUp();
 	glm::vec3 getFront();
 
