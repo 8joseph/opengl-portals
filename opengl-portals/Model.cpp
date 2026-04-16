@@ -146,7 +146,8 @@ unsigned int Model::textureFromFile(const char* path, const std::string& directo
 
 
 		glBindTexture(GL_TEXTURE_2D, textureID);
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1); //this is to make sure the pixel information is alligned correctly in memory between sbti and openGL, idk why learnopengl does not mention this.
+		//line below is to make sure the pixel information is alligned correctly in memory between sbti and openGL, idk why learnopengl does not mention this. Does not always cause a problem, I think it depends on texture file format
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1); 
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 		//std::cout<< "ERROR" << glGetError();

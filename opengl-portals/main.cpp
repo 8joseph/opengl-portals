@@ -108,7 +108,7 @@ int main(){
 
 
     Portal p1 = Portal();
-    p1.setPosition(glm::vec3(-1.0f, 0.0f, -1.0f));
+    p1.setPosition(glm::vec3(2.0f, 0.0f, -1.0f));
     p1.setRotation(glm::vec3(0.0f, 180.0f, 0.0f)); 
     
     Portal p2 = Portal();
@@ -117,11 +117,13 @@ int main(){
 
 
 
+
     p1.setLinkedPortal(&p2);
     p2.setLinkedPortal(&p1);
     
     scene.addPortal(&p2);
     scene.addPortal(&p1);
+
 
     glm::mat4 startProjection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 30.0f);
     
@@ -192,7 +194,7 @@ void processInput(GLFWwindow* window)
     mainCamera.setPosition(cameraPos);
 }
 
-//taken from learnopengl.com
+//taken from learnopengl.com - for mouse input moving the camera
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
     float xpos = static_cast<float>(xposIn);
@@ -206,16 +208,15 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     }
 
     float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+    float yoffset = lastY - ypos; 
     lastX = xpos;
     lastY = ypos;
 
-    float sensitivity = 0.1f; // change this value to your liking
+    float sensitivity = 0.1f; 
     xoffset *= sensitivity;
     yoffset *= sensitivity;
     
     mainCamera.updatePitchAndYaw(yoffset, xoffset);
-    
 }
 
 void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recursionLevel, glm::mat4 currentProjectionMatrix)
@@ -246,7 +247,7 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
 
     glfwPollEvents();
 
-    if (recursionLevel >= maxRecursionLevel)//CHANGE TO maxRecursionLevel!!
+    if (recursionLevel >= maxRecursionLevel)
     {
         return;
     }

@@ -1,14 +1,2 @@
-﻿  Camera.cpp
-  main.cpp
-C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\main.cpp(136,28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  Model.cpp
-  Object3D.cpp
-  Portal.cpp
-C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\Portal.cpp(5,13): warning C4305: 'initializing': truncation from 'double' to 'const GLfloat'
-C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\Portal.cpp(6,13): warning C4305: 'initializing': truncation from 'double' to 'const GLfloat'
-C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\Portal.cpp(7,13): warning C4305: 'initializing': truncation from 'double' to 'const GLfloat'
-C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\Portal.cpp(8,13): warning C4305: 'initializing': truncation from 'double' to 'const GLfloat'
-  Scene.cpp
-  Skybox.cpp
-  Generating Code...
+﻿  Scene.cpp
   opengl-portals.vcxproj -> C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\x64\Debug\opengl-portals.exe
