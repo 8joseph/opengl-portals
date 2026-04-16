@@ -1,7 +1,7 @@
 #version 330 core
 out vec4 FragColor;
 
-in vec2 TexCoord; // Must match the output name from shader.vs
+in vec2 TexCoord;
 
 struct Material {
     sampler2D texture_diffuse1;
