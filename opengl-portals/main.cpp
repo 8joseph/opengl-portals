@@ -16,7 +16,7 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
-void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recursionLevel, glm::mat4 currentProjectionMatrix);
+void render(Camera camera, Shader shader, Shader portalShader, Scene scene, int recursionLevel, glm::mat4 currentProjectionMatrix);
 glm::mat4 ModifyProjectionMatrix(const glm::vec4& clipPlane, glm::mat4 matrix);
 inline float sgn(float a);
 
@@ -219,8 +219,9 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     mainCamera.updatePitchAndYaw(yoffset, xoffset);
 }
 
-void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recursionLevel, glm::mat4 currentProjectionMatrix)
+void render(Camera camera, Shader shader, Shader portalShader, Scene scene, int recursionLevel, glm::mat4 currentProjectionMatrix)
 {   
+    //STEPS ONE AND TWO: render all non-portal objects
     glm::mat4 view = camera.getViewMatrix();
 
     glEnable(GL_STENCIL_TEST);
@@ -243,18 +244,20 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
     portalShader.setMat4("projection", currentProjectionMatrix);
 
 
-    s.draw(shader, camera);
+    scene.draw(shader, camera);
 
     glfwPollEvents();
-
+    //STEP THREE: Return if maximum recursion depth has been reached.
     if (recursionLevel >= maxRecursionLevel)
     {
         return;
     }
 
-    ///------------------------------------------
-    for (Portal* portal : s.getPortals()) //
+
+    //STEP FOUR: Loop through all portals
+    for (Portal* portal : scene.getPortals()) //
     {
+        //STEP FIVE: Write to the stencil buffer.
         //write to the stencil buffer with recursionLevel
         glEnable(GL_STENCIL_TEST);
         glStencilMask(0xFF);
@@ -277,13 +280,12 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glDepthMask(GL_TRUE);
 
+        //STEP SIX: Write maximum depth
         //make it so the stencil buffer will only pass fragments when equal to 1
         //and stop writing to the stencil buffer
         glStencilFunc(GL_EQUAL, recursionLevel+1, 0xFF);
         glStencilMask(0x00);
 
-        //clear the depth buffer DONT USE
-        //glClear(GL_DEPTH_BUFFER_BIT);
 
         //we cannot clear the depth buffer, so instead set the depth buffer to max distance where the stencil buffer allows
         //turn off colour mask, make sure that depth will always be written
@@ -305,14 +307,14 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
 
 
 
-
+        //STEP SEVEN: Calculate the exit portal camera transform and set it
         //calculate the transformation of the camera to be used for the portal view
         glm::mat4 portalMatrix = portal->getModelMatrix();
         glm::mat4 linkedPortalMatrix = portal->getLinkedPortal()->getModelMatrix();
-        glm::mat4 t2 = linkedPortalMatrix * glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::inverse(portalMatrix);
-        glm::vec3 newCamPos = glm::vec3(t2 * glm::vec4(camera.getPosition(), 1.0f));
-        glm::vec3 newCamFront = glm::normalize(glm::vec3(t2 * glm::vec4(camera.getFront(), 0.0f)));
-        
+        glm::mat4 newMat = linkedPortalMatrix * glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::inverse(portalMatrix);
+        glm::vec3 newCamPos = glm::vec3(newMat * glm::vec4(camera.getPosition(), 1.0f));
+        glm::vec3 newCamFront = glm::normalize(glm::vec3(newMat * glm::vec4(camera.getFront(), 0.0f)));
+        //convert the newCamFront into euler angles so they can be set in the camera class
         float pitch = glm::degrees(asin(newCamFront.y));
         float yaw = glm::degrees(atan2(newCamFront.z, newCamFront.x));
      
@@ -320,6 +322,8 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
         Camera newCam(newCamPos);
         newCam.setPitchAndYaw(pitch, yaw);
 
+
+        //STEP EIGHT: Oblique frustum culling
         // get cameras view matrix
         glm::mat4 newView = newCam.getViewMatrix();
 
@@ -332,19 +336,21 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
         glm::vec3 posView = glm::vec3(newView * glm::vec4(linkedPos, 1.0f));
 
         //get distance from origin in view space
-        //move it back a bit too (makes portal less glitchy
-        float d = -glm::dot(normalView, posView);
-        d += 0.01f; 
+        //move it back a bit too (makes portal less glitchy with z-fighting effect)
+        float distance = -glm::dot(normalView, posView);
+        distance += 0.01f; 
  
 
         //combine this into a plane
-        glm::vec4 viewSpaceClipPlane(normalView.x, normalView.y, normalView.z, d);
+        glm::vec4 viewSpaceClipPlane(normalView.x, normalView.y, normalView.z, distance);
 
         //modify projection matrix for oblique frustrum culling
         glm::mat4 newProjection = ModifyProjectionMatrix(viewSpaceClipPlane, currentProjectionMatrix);
-        render(newCam, shader, portalShader, s, recursionLevel + 1, newProjection);
 
-        //CLEANUP
+        //STEP NINE: Recursively call the render function
+        render(newCam, shader, portalShader, scene, recursionLevel + 1, newProjection);
+
+        //STEP 10: Cleanup, decrement the stencil buffer value 
         glEnable(GL_STENCIL_TEST);
         glStencilMask(0xFF);
         glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
@@ -362,10 +368,7 @@ void render(Camera camera, Shader shader, Shader portalShader, Scene s, int recu
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glDepthMask(GL_TRUE);
         glStencilMask(0x00);
-        ////cleanup
-        //glDisable(GL_STENCIL_TEST);
-        //glStencilMask(0xFF);
-        //glClear(GL_STENCIL_BUFFER_BIT);
+
     }
 }
 

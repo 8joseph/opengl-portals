@@ -1,11 +1,14 @@
 #include "Portal.h"
 #include <iostream>
 
+const float WIDTH = 0.5;
+const float HEIGHT = 0.5;
+
 const static GLfloat vertices[] = 
-			{ -0.5, -0.8, 0,
-			  -0.5,  0.8, 0,
-			   0.5,  0.8, 0,
-			   0.5, -0.8, 0 };		
+			{ -WIDTH, -HEIGHT, 0,
+			  -WIDTH,  HEIGHT, 0,
+			   WIDTH,  HEIGHT, 0,
+			   WIDTH, -HEIGHT, 0 };		
 
 static GLubyte indices[] = 
 			{0,1,2,
