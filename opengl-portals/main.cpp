@@ -86,35 +86,42 @@ int main(){
     glCullFace(GL_BACK);    //cull back faces
     glFrontFace(GL_CCW);     //font faces are clockwise
     
-    stbi_set_flip_vertically_on_load(true); //maybe change this 
+    stbi_set_flip_vertically_on_load(false); //leave this as false.
     
 
-
-    //Model base = Model("models/prototype/prototype.obj");
-    //base.setScale(glm::vec3(0.2f));
-    //base.setPosition(glm::vec3(0.0f, -0.8f, 0.0f));
- 
-    //scene.addObject(&base);
 
     Model monkey = Model("models/monkey/monkey.obj");
     monkey.setScale(glm::vec3(0.3f));
     glm::vec3 monkeyStartPos = glm::vec3(-0.0f, 0.1f, 0.0f);
     monkey.setPosition(monkeyStartPos);
-    scene.addObject(&monkey);
+    //scene.addObject(&monkey);
 
     Model dust2 = Model("models/dust2/dust2.obj");
     dust2.setScale(glm::vec3(0.01, 0.01, 0.01));
-    scene.addObject(&dust2);
+    //scene.addObject(&dust2);
 
+    Model floor = Model("models/prototype/floor.obj");
+    floor.setScale(glm::vec3(0.5));
+    floor.setPosition(glm::vec3(0.0f, -1.3f, 0.0f)); 
+    scene.addObject(&floor);    
 
     Portal p1 = Portal();
     p1.setPosition(glm::vec3(2.0f, 0.0f, -1.0f));
     p1.setRotation(glm::vec3(0.0f, 180.0f, 0.0f)); 
+
+    Model frame1 = Model("models/portal-frame/portal-frame.obj");
+    frame1.setPosition(p1.getPosition());
+    frame1.setRotation(p1.getRotation());
+    scene.addObject(&frame1);
+
     
-    Portal p2 = Portal();
+    Portal p2 = Portal();   
     p2.setPosition(glm::vec3(-1.0f, 0.0f, 1.0f));
     p2.setRotation(glm::vec3(0.0f, 0.0f, 0.0f));
-
+    Model frame2 = Model("models/portal-frame/portal-frame.obj");
+    frame2.setPosition(p2.getPosition());
+    frame2.setRotation(p2.getRotation());
+    scene.addObject(&frame2);
 
 
 
@@ -124,22 +131,29 @@ int main(){
     scene.addPortal(&p2);
     scene.addPortal(&p1);
 
+    Model teapot = Model("models/teapot/teapot.obj");
+    teapot.setScale(glm::vec3(0.01, 0.01, 0.01));
+    glm::vec3 teapotStartPos = glm::vec3(-0.0f, 0.1f, 0.0f);
+    teapot.setPosition(teapotStartPos);
+    scene.addObject(&teapot);
 
-    glm::mat4 startProjection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 30.0f);
+
+        
+    glm::mat4 startProjection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
     
     while (!glfwWindowShouldClose(window))
     {
         processInput(window);
 
         glStencilMask(0xFF);
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        monkey.setRotation(glm::vec3(0.0f, monkey.getRotation().y + sin(deltaTime) * 80, 0.0f));
-        monkey.setPosition(glm::vec3( monkeyStartPos.x  + sin(glfwGetTime()) * 1.0f, monkeyStartPos.y, monkeyStartPos.z));
+        teapot.setRotation(glm::vec3(0.0f, teapot.getRotation().y + sin(deltaTime) * 80, 0.0f));
+        teapot.setPosition(glm::vec3( teapotStartPos.x  + sin(glfwGetTime()) * 1.0f, teapotStartPos.y, teapotStartPos.z));
         render(mainCamera, shader, portalShader, scene, 0, startProjection);
         glfwSwapBuffers(window);
 
@@ -167,7 +181,7 @@ void processInput(GLFWwindow* window)
     glm::vec3 cameraPos = mainCamera.getPosition();
     glm::vec3 cameraFront = mainCamera.getFront();
     glm::vec3 cameraUp = mainCamera.getUp();
-
+    //tab is used for 'sprint' instead of shift because glfw does not allow for the shift key to be easily polled.
     if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS) {
         camSpeed = camSpeedFast;
     }
