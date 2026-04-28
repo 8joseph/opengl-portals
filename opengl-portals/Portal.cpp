@@ -1,8 +1,8 @@
 #include "Portal.h"
 #include <iostream>
 
-const float WIDTH = 0.5;
-const float HEIGHT = 0.5;
+const float WIDTH = 0.75;
+const float HEIGHT = 0.75;
 
 const static GLfloat vertices[] = 
 			{ -WIDTH, -HEIGHT, 0,

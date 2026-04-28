@@ -40,8 +40,10 @@ bool captureMouse = true; //check - think this is redundant
 float lastX = 800.0f / 2.0;
 float lastY = 600.0f / 2.0;
 
-int maxRecursionLevel = 4;
+int maxRecursionLevel = 5;
 
+double prevTime = glfwGetTime();
+int frameCount = 0;
 
 
 int main(){
@@ -106,19 +108,19 @@ int main(){
     scene.addObject(&floor);    
 
     Portal p1 = Portal();
-    p1.setPosition(glm::vec3(2.0f, 0.0f, -1.0f));
-    p1.setRotation(glm::vec3(0.0f, 180.0f, 0.0f)); 
+    p1.setPosition(glm::vec3(1.0f, 0.5f, 0.0f));
+    p1.setRotation(glm::vec3(0.0f, 0.0f, 0.0f)); 
 
-    Model frame1 = Model("models/portal-frame/portal-frame.obj");
+    Model frame1 = Model("models/portal-frame/portal-frame2.obj");
     frame1.setPosition(p1.getPosition());
     frame1.setRotation(p1.getRotation());
     scene.addObject(&frame1);
 
     
     Portal p2 = Portal();   
-    p2.setPosition(glm::vec3(-1.0f, 0.0f, 1.0f));
-    p2.setRotation(glm::vec3(0.0f, 0.0f, 0.0f));
-    Model frame2 = Model("models/portal-frame/portal-frame.obj");
+    p2.setPosition(glm::vec3(1.0f, 0.5f, -2.0f));
+    p2.setRotation(glm::vec3(0.0f, 180.0f, 0.0f));
+    Model frame2 = Model("models/portal-frame/portal-frame2.obj");
     frame2.setPosition(p2.getPosition());
     frame2.setRotation(p2.getRotation());
     scene.addObject(&frame2);
@@ -133,7 +135,7 @@ int main(){
 
     Model teapot = Model("models/teapot/teapot.obj");
     teapot.setScale(glm::vec3(0.01, 0.01, 0.01));
-    glm::vec3 teapotStartPos = glm::vec3(-0.0f, 0.1f, 0.0f);
+    glm::vec3 teapotStartPos = glm::vec3(-1.0f, -0.5f, 0.0f);
     teapot.setPosition(teapotStartPos);
     scene.addObject(&teapot);
 
@@ -143,6 +145,15 @@ int main(){
     
     while (!glfwWindowShouldClose(window))
     {
+        //calculate fps
+        double currentTime = glfwGetTime();
+        frameCount++;
+        if (currentTime - prevTime >= 1.0) {
+            std::cout << "FPS: " << frameCount << std::endl;
+            frameCount = 0;
+            prevTime = currentTime;
+        }
+
         processInput(window);
 
         glStencilMask(0xFF);
@@ -152,8 +163,8 @@ int main(){
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        teapot.setRotation(glm::vec3(0.0f, teapot.getRotation().y + sin(deltaTime) * 80, 0.0f));
-        teapot.setPosition(glm::vec3( teapotStartPos.x  + sin(glfwGetTime()) * 1.0f, teapotStartPos.y, teapotStartPos.z));
+        //teapot.setRotation(glm::vec3(0.0f, teapot.getRotation().y + sin(deltaTime) * 80, 0.0f));
+        //teapot.setPosition(glm::vec3( teapotStartPos.x  + sin(glfwGetTime()) * 1.0f, teapotStartPos.y, teapotStartPos.z));
         render(mainCamera, shader, portalShader, scene, 0, startProjection);
         glfwSwapBuffers(window);
 
