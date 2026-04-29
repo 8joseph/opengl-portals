@@ -22,7 +22,7 @@ inline float sgn(float a);
 
 
 
-
+const bool TEST_FPS_RECURSION = true;
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
 
@@ -40,7 +40,7 @@ bool captureMouse = true; //check - think this is redundant
 float lastX = 800.0f / 2.0;
 float lastY = 600.0f / 2.0;
 
-int maxRecursionLevel = 5;
+int maxRecursionLevel = 1;
 
 double prevTime = glfwGetTime();
 int frameCount = 0;
@@ -149,7 +149,7 @@ int main(){
         double currentTime = glfwGetTime();
         frameCount++;
         if (currentTime - prevTime >= 1.0) {
-            std::cout << "FPS: " << frameCount << std::endl;
+            std::cout << frameCount << std::endl;
             frameCount = 0;
             prevTime = currentTime;
         }
