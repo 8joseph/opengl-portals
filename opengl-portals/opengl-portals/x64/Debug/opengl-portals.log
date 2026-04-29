@@ -1,14 +1,3 @@
-﻿  Camera.cpp
-  main.cpp
-C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\main.cpp(163,28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  Mesh.cpp
-C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\Mesh.cpp(59,43): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
-  Model.cpp
-  Object3D.cpp
-  Portal.cpp
-  Scene.cpp
-  Skybox.cpp
-  stb_implementation.cpp
-  testCube.cpp
-  Generating Code...
+﻿  main.cpp
+C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\main.cpp(164,28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
   opengl-portals.vcxproj -> C:\Users\epicn\Documents\GitHub\opengl-portals\opengl-portals\x64\Debug\opengl-portals.exe
