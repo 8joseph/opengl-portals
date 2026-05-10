@@ -19,13 +19,14 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
 void render(Camera camera, Shader shader, Shader portalShader, Scene scene, int recursionLevel, glm::mat4 currentProjectionMatrix);
 glm::mat4 ModifyProjectionMatrix(const glm::vec4& clipPlane, glm::mat4 matrix);
 inline float sgn(float a);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 
 
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
 
-Camera mainCamera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera mainCamera(glm::vec3(3.0f, 1.0f, -2.0f));
 GLFWwindow* window; 
 
 
@@ -39,10 +40,12 @@ bool captureMouse = true; //check - think this is redundant
 float lastX = 800.0f / 2.0;
 float lastY = 600.0f / 2.0;
 
-int maxRecursionLevel = 5;
+int maxRecursionLevel = 3;
 
 double prevTime = glfwGetTime();
 int frameCount = 0;
+
+int portalPos = 1;
 
 
 int main(){
@@ -61,6 +64,8 @@ int main(){
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetKeyCallback(window, key_callback);
+
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -109,20 +114,20 @@ int main(){
     scene.addObject(&floor);    
 
     Portal p1 = Portal();
-    p1.setPosition(glm::vec3(1.0f, 0.5f, 0.0f));
+    p1.setPosition(glm::vec3(1.0f, 0.5f, 1.0f));
     p1.setRotation(glm::vec3(0.0f, 0.0f, 0.0f)); 
 
     Model frame1 = Model("models/portal-frame/portal-frame2.obj");
-    frame1.setPosition(p1.getPosition());
+    frame1.setPosition(p1.getPosition() + glm::vec3(0, 0, 0.0));
     frame1.setRotation(p1.getRotation());
     scene.addObject(&frame1);
 
     
     Portal p2 = Portal();   
-    p2.setPosition(glm::vec3(3.0f, 0.5f, 0.0f));
-    p2.setRotation(glm::vec3(0.0f, 0.0f, 0.0f));
+    p2.setPosition(glm::vec3(1.0f, 0.5f, -1.0f));
+    p2.setRotation(glm::vec3(0.0f, 180.0f, 0.0f));
     Model frame2 = Model("models/portal-frame/portal-frame2.obj");
-    frame2.setPosition(p2.getPosition());
+    frame2.setPosition(p2.getPosition() + glm::vec3(0,0,-0.0));
     frame2.setRotation(p2.getRotation());
     scene.addObject(&frame2);
 
@@ -136,9 +141,11 @@ int main(){
 
     Model teapot = Model("models/teapot/teapot.obj");
     teapot.setScale(glm::vec3(0.01, 0.01, 0.01));
-    glm::vec3 teapotStartPos = glm::vec3(1.0f, 0.0f, -1.0f);
+    glm::vec3 teapotStartPos = glm::vec3(0.0f, 0.0f, 0.0f);
     teapot.setPosition(teapotStartPos);
     scene.addObject(&teapot);
+
+
 
 
         
@@ -150,7 +157,7 @@ int main(){
         double currentTime = glfwGetTime();
         frameCount++;
         if (currentTime - prevTime >= 1.0) {
-            std::cout << frameCount << std::endl;
+            //std::cout << frameCount << std::endl;
             frameCount = 0;
             prevTime = currentTime;
         }
@@ -168,6 +175,28 @@ int main(){
         teapot.setPosition(glm::vec3( teapotStartPos.x  + sin(glfwGetTime()) * 1.0f, teapotStartPos.y, teapotStartPos.z));
         render(mainCamera, shader, portalShader, scene, 0, startProjection);
         glfwSwapBuffers(window);
+
+        //std::cout << mainCamera.getPosition().x << " " << mainCamera.getPosition().y << " " << mainCamera.getPosition().z << std::endl;
+
+        if (portalPos == 1) {
+            p2.setPosition(glm::vec3(1.0f, 0.5f, -1.0f));
+            p2.setRotation(glm::vec3(0.0f, 180.0f, 0.0f));
+
+        }
+        else if (portalPos == 2) {
+            p2.setPosition(glm::vec3(3.0f, 0.5f, 1.0f));
+            p2.setRotation(glm::vec3(0.0f, 0.0f, 0.0f));
+
+            
+        }
+        else if (portalPos == 3) {
+            p2.setPosition(glm::vec3(1.0f, 2.5f, 1.0f));
+            p2.setRotation(glm::vec3(-30.0f, 0.0f, 0.0f));
+
+
+        }
+        frame2.setPosition(p2.getPosition() + glm::vec3(0, 0, -0.0));
+        frame2.setRotation(p2.getRotation());
 
 
     }
@@ -437,4 +466,15 @@ glm::mat4 ModifyProjectionMatrix(const glm::vec4& clipPlane, glm::mat4 matrix)
 
 
     return matrix;
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+
+    if (action == GLFW_PRESS) {
+        if (key == GLFW_KEY_RIGHT) { maxRecursionLevel += 1; }
+        if (key  == GLFW_KEY_LEFT) { maxRecursionLevel -= 1; }
+        if (key == GLFW_KEY_1) { portalPos = 1; }
+        if (key == GLFW_KEY_2) { portalPos = 2; }
+        if (key == GLFW_KEY_3) { portalPos = 3; }
+    }
 }
